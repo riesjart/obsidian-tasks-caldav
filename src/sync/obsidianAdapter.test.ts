@@ -368,11 +368,13 @@ describe('ObsidianAdapter', () => {
 
   describe('applyChanges — delete', () => {
     function makeDeleteWrapper(task: ObsidianTask | null) {
-      return {
+      const removeTaskFromVault = jest.fn().mockResolvedValue(undefined);
+      const wrapper = {
         ...(dummyWrapper as unknown as Record<string, unknown>),
         findTaskById: jest.fn().mockReturnValue(task),
-        removeTaskFromVault: jest.fn().mockResolvedValue(undefined),
+        removeTaskFromVault,
       } as unknown as ObsidianTasksWrapper;
+      return { wrapper, removeTaskFromVault };
     }
 
     const commonTask: CommonTask = {
@@ -384,7 +386,7 @@ describe('ObsidianAdapter', () => {
 
     it('removes the vault line when deleteBehavior is deleteObsidian', async () => {
       const existing = makeTask();
-      const wrapper = makeDeleteWrapper(existing);
+      const { wrapper, removeTaskFromVault } = makeDeleteWrapper(existing);
       const adapter = new ObsidianAdapter(wrapper, {
         ...defaultSettings,
         deleteBehavior: 'deleteObsidian',
@@ -392,20 +394,20 @@ describe('ObsidianAdapter', () => {
 
       await adapter.applyChanges([{ type: 'delete', task: commonTask }]);
 
-      expect(wrapper.removeTaskFromVault).toHaveBeenCalledWith(existing);
+      expect(removeTaskFromVault).toHaveBeenCalledWith(existing);
     });
 
     it('leaves the vault untouched when deleteBehavior is not deleteObsidian', async () => {
-      const wrapper = makeDeleteWrapper(makeTask());
+      const { wrapper, removeTaskFromVault } = makeDeleteWrapper(makeTask());
       const adapter = new ObsidianAdapter(wrapper, defaultSettings);
 
       await adapter.applyChanges([{ type: 'delete', task: commonTask }]);
 
-      expect(wrapper.removeTaskFromVault).not.toHaveBeenCalled();
+      expect(removeTaskFromVault).not.toHaveBeenCalled();
     });
 
     it('is a no-op when the task cannot be found in the vault', async () => {
-      const wrapper = makeDeleteWrapper(null);
+      const { wrapper, removeTaskFromVault } = makeDeleteWrapper(null);
       const adapter = new ObsidianAdapter(wrapper, {
         ...defaultSettings,
         deleteBehavior: 'deleteObsidian',
@@ -415,7 +417,7 @@ describe('ObsidianAdapter', () => {
         adapter.applyChanges([{ type: 'delete', task: commonTask }])
       ).resolves.toBeDefined();
 
-      expect(wrapper.removeTaskFromVault).not.toHaveBeenCalled();
+      expect(removeTaskFromVault).not.toHaveBeenCalled();
     });
   });
 
