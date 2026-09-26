@@ -418,6 +418,16 @@ class CalDAVSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Delete vault tasks removed on the calendar')
+			.setDesc('Remove the task line from your notes when its calendar entry is gone. Off by default, because some servers hide completed entries, which looks like a deletion. While off, a task deleted on the calendar is re-created there on a later sync.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.deleteBehavior === 'deleteObsidian')
+				.onChange(async (value) => {
+					this.plugin.settings.deleteBehavior = value ? 'deleteObsidian' : 'keepBoth';
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
 			.setName('Show automatic sync notifications')
 			.setDesc('Show progress notices when sync runs automatically in the background. Manual sync and errors always notify.')
 			.addToggle(toggle => toggle
